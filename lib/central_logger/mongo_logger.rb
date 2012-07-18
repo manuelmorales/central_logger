@@ -176,6 +176,22 @@ module CentralLogger
           ActiveRecord::Base.colorize_logging)
       end
 
+      def stringify_values obj
+        if obj.is_a? Hash
+          obj.each do |key, value|
+            obj[key] = stringify_values(value)
+          end
+        elsif obj.is_a? Array
+          obj.map do |value|
+            stringify_values(value)
+          end
+        elsif obj.is_a? String
+          obj
+        else
+          obj.inspect
+        end
+      end
+
       # force the data in the db by inspecting each top level array and hash element
       # this will flatten other hashes and arrays
       def force_serialize(rec)
@@ -185,7 +201,7 @@ module CentralLogger
           end
         end
         if pms = rec[:params]
-          pms.each { |i, j| pms[i] = j.inspect }
+          rec[:params] = stringify_values(rec[:params])
         end
       end
   end # class MongoLogger
