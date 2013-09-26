@@ -18,8 +18,8 @@ module CentralLogger
     def initialize(options={})
       path = options[:path] || File.join(Rails.root, "log/#{Rails.env}.log")
       level = options[:level] || DEBUG
-      internal_initialize
       @level = level
+      configure
       if disable_file_logging?
         @buffer        = {}
         @auto_flushing = 1
@@ -27,6 +27,7 @@ module CentralLogger
       else
         super(path, level)
       end
+      internal_initialize
     rescue => e
       # should use a config block for this
       Rails.env.production? ? (raise e) : (puts "Using BufferedLogger due to exception: " + e.message)
