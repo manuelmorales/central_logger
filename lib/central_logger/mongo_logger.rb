@@ -2,8 +2,16 @@ require 'erb'
 require 'mongo'
 require 'central_logger/replica_set_helper'
 
+begin
+  require 'new_relic/agent/method_tracer'
+rescue MissingSourceFile => e
+  puts "Not loading NewRelic gem because it is not present."
+end
+
 module CentralLogger
   class MongoLogger < ActiveSupport::BufferedLogger
+
+    include ::NewRelic::Agent::MethodTracer
     include ReplicaSetHelper
 
     MB = 2 ** 20
@@ -168,6 +176,8 @@ module CentralLogger
       def insert_log_record(safe=false)
         @mongo_collection.insert(@mongo_record, :safe => safe)
       end
+
+      add_method_tracer :insert_log_record, "Custom/CentralLogger/insert_log_record"
 
       def logging_colorized?
         # Cache it since these ActiveRecord attributes are assigned after logger initialization occurs in Rails boot
